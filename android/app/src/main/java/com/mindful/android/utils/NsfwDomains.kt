@@ -64,59 +64,69 @@ object NsfwDomains {
         addY()
         addZ()
 
-        addColumndeeplyHosts00()
+        addColumndeeplyHosts()
 
         Log.d(TAG, "init: Nsfw domains initialized successfully")
         return dict
     }
 
-    fun addColumndeeplyHosts00(context: Context) {
-        val cacheFile = File(context.cacheDir, "hosts00")
-        val sourceUrl = "https://raw.githubusercontent.com/columndeeply/hosts/main/hosts00"
+    fun addColumndeeplyHosts(context: Context) {
+        val baseUrl = "https://raw.githubusercontent.com/columndeeply/hosts/main/hosts"
+        val cacheDir = context.cacheDir
     
         try {
-            // Download and cache if not already cached (timeout: 15 secs)
-            if (!cacheFile.exists()) {
-                val url = URL(sourceUrl)
-                val connection = url.openConnection() as HttpURLConnection
-                connection.connectTimeout = 15_000
-                connection.readTimeout = 15_000
-                connection.requestMethod = "GET"
+            // Download & add hosts00 up to hosts05
+            for (i in 0..5) {
+                val suffix = String.format("%02d", i)
+                val fileName = "hosts$suffix"
+                val sourceUrl = "$baseUrl$suffix"
+                val cacheFile = File(cacheDir, fileName)
     
-                connection.inputStream.use { input ->
-                    cacheFile.outputStream().use { output ->
-                        input.copyTo(output)
+                // Download and cache if not already cached (timeout: 15 secs)
+                if (!cacheFile.exists()) {
+                    val url = URL(sourceUrl)
+                    val connection = url.openConnection() as HttpURLConnection
+                    connection.connectTimeout = 15_000
+                    connection.readTimeout = 15_000
+                    connection.requestMethod = "GET"
+    
+                    connection.inputStream.use { input ->
+                        cacheFile.outputStream().use { output ->
+                            input.copyTo(output)
+                        }
                     }
+    
+                    connection.disconnect()
+                    Log.d(TAG, "addColumndeeplyHosts: $fileName downloaded and cached")
                 }
     
-                connection.disconnect()
-                Log.d(TAG, "addColumndeeplyHosts00: hosts00 downloaded and cached")
-            }
+                // Read cached file and extract domains
+                cacheFile.bufferedReader().useLines { lines ->
+                    lines.forEach { line ->
+                        val trimmed = line.trim()
+                        if (trimmed.isEmpty()) return@forEach
     
-            // Read cached file and extract domains
-            cacheFile.bufferedReader().useLines { lines ->
-                lines.forEach { line ->
-                    val trimmed = line.trim()
-                    if (trimmed.isEmpty()) return@forEach
-    
-                    // Expected format: "127.0.0.1 domain.tld"
-                    // Instead of substring("127.0.0.1 ".length), split at " " for safety
-                    val spaceIndex = trimmed.indexOf(' ')
-                    if (spaceIndex > 0 && spaceIndex < trimmed.length - 1) {
-                        val domain = trimmed.substring(spaceIndex + 1).trim()
-                        if (domain.isNotEmpty()) { // better safe than sorry
-                            dict[domain] = true
+                        // Expected format: "127.0.0.1 domain.tld"
+                        // Instead of substring("127.0.0.1 ".length), split at " " for safety
+                        val spaceIndex = trimmed.indexOf(' ')
+                        if (spaceIndex > 0 && spaceIndex < trimmed.length - 1) {
+                            val domain = trimmed.substring(spaceIndex + 1).trim()
+                            if (domain.isNotEmpty()) { // better safe than sorry
+                                dict[domain] = true
+                            }
                         }
                     }
                 }
+                
+                Log.d(TAG, "addColumndeeplyHosts: $fileName domains added successfully")
             }
     
-            Log.d(TAG, "addColumndeeplyHosts00: domains added successfully")
     
         } catch (e: Exception) {
-            Log.e(TAG, "addColumndeeplyHosts00: failed", e)
+            Log.e(TAG, "addColumndeeplyHosts: failed", e)
         }
     }
+
 
     fun add0() {
         val domains = arrayOf(
