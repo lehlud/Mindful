@@ -3,6 +3,7 @@
  *  *
  *  *  * Copyright (c) 2024 Mindful (https://github.com/akaMrNagar/Mindful)
  *  *  * Author : Pawan Nagar (https://github.com/akaMrNagar)
+ *  *  * Extended by : Ludwig Lehnert (https://github.com/lehlud) in 2025
  *  *  *
  *  *  * This source code is licensed under the GPL-2.0 license license found in the
  *  *  * LICENSE file in the root directory of this source tree.
@@ -11,8 +12,13 @@
  */
 package com.mindful.android.utils
 
+import android.content.Context
 import android.util.Log
-
+import java.io.BufferedReader
+import java.io.File
+import java.io.InputStreamReader
+import java.net.HttpURLConnection
+import java.net.URL
 
 // Note: I have found this list of domains somewhere i didn't know.
 // If your are the owner or the curator of this domains list please let us know about it.
@@ -58,8 +64,58 @@ object NsfwDomains {
         addY()
         addZ()
 
+        addColumndeeplyHosts00()
+
         Log.d(TAG, "init: Nsfw domains initialized successfully")
         return dict
+    }
+
+    fun addColumndeeplyHosts00(context: Context) {
+        val cacheFile = File(context.cacheDir, "hosts00")
+        val sourceUrl = "https://raw.githubusercontent.com/columndeeply/hosts/main/hosts00"
+    
+        try {
+            // Download and cache if not already cached (timeout: 15 secs)
+            if (!cacheFile.exists()) {
+                val url = URL(sourceUrl)
+                val connection = url.openConnection() as HttpURLConnection
+                connection.connectTimeout = 15_000
+                connection.readTimeout = 15_000
+                connection.requestMethod = "GET"
+    
+                connection.inputStream.use { input ->
+                    cacheFile.outputStream().use { output ->
+                        input.copyTo(output)
+                    }
+                }
+    
+                connection.disconnect()
+                Log.d(TAG, "addColumndeeplyHosts00: hosts00 downloaded and cached")
+            }
+    
+            // Read cached file and extract domains
+            cacheFile.bufferedReader().useLines { lines ->
+                lines.forEach { line ->
+                    val trimmed = line.trim()
+                    if (trimmed.isEmpty()) return@forEach
+    
+                    // Expected format: "127.0.0.1 domain.tld"
+                    // Instead of substring("127.0.0.1 ".length), split at " " for safety
+                    val spaceIndex = trimmed.indexOf(' ')
+                    if (spaceIndex > 0 && spaceIndex < trimmed.length - 1) {
+                        val domain = trimmed.substring(spaceIndex + 1).trim()
+                        if (domain.isNotEmpty()) { // better safe than sorry
+                            dict[domain] = true
+                        }
+                    }
+                }
+            }
+    
+            Log.d(TAG, "addColumndeeplyHosts00: domains added successfully")
+    
+        } catch (e: Exception) {
+            Log.e(TAG, "addColumndeeplyHosts00: failed", e)
+        }
     }
 
     fun add0() {
