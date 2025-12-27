@@ -27,7 +27,7 @@ Thank you for being here. <br> You matter more than you know 💙
 
 ### 2. Branching Strategy:
 
-- Development occurs on the `dev` branch. Please fork the repository and create your branch from `dev`.
+- Development occurs on the `main` branch. Please fork the repository and create your branch from `main`.
 
 ### 3. Make Changes:
 
@@ -35,7 +35,7 @@ Thank you for being here. <br> You matter more than you know 💙
 
 ### 4. Submit a Pull Request:
 
-- Once your changes are ready, submit a pull request to the `dev` branch of the repository. Be sure to reference any issues that your pull request addresses in the description.
+- Once your changes are ready, submit a pull request to the `main` branch of the repository. Be sure to reference any issues that your pull request addresses in the description.
 
 ### 5. Review and Merge:
 
