@@ -74,6 +74,9 @@ object NsfwDomains {
         val baseUrl = "https://raw.githubusercontent.com/columndeeply/hosts/main/hosts"
         val cacheDir = context.cacheDir
     
+        // Cache invalidation: 20 days
+        val cacheValidityMillis = 20L * 24 * 60 * 60 * 1000
+    
         try {
             // Download & add hosts00 up to hosts05
             for (i in 0..5) {
@@ -82,8 +85,12 @@ object NsfwDomains {
                 val sourceUrl = "$baseUrl$suffix"
                 val cacheFile = File(cacheDir, fileName)
     
-                // Download and cache if not already cached (timeout: 15 secs)
-                if (!cacheFile.exists()) {
+                val cacheExpired =
+                    !cacheFile.exists() ||
+                    (System.currentTimeMillis() - cacheFile.lastModified() > cacheValidityMillis)
+    
+                // Download and cache if not already cached or cache expired (timeout: 15 secs)
+                if (cacheExpired) {
                     val url = URL(sourceUrl)
                     val connection = url.openConnection() as HttpURLConnection
                     connection.connectTimeout = 15_000
@@ -117,10 +124,9 @@ object NsfwDomains {
                         }
                     }
                 }
-                
+    
                 Log.d(TAG, "addColumndeeplyHosts: $fileName domains added successfully")
             }
-    
     
         } catch (e: Exception) {
             Log.e(TAG, "addColumndeeplyHosts: failed", e)
